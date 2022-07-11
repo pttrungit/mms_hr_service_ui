@@ -15,8 +15,11 @@ export class EmployeeListComponent implements OnInit {
 
   }
 
+  getEmployee(employee) {
+    this.employeeService.getEmployee(employee);
+  }
+
   deleteEmployee(id) {
-  console.log("hello"+id);
     this.employeeService.delete(id);
   }
 

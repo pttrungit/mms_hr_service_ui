@@ -3,8 +3,11 @@
     <table class="table table-bordered table-striped">
       <thead class="thead-dark">
       <tr>
-        <th scope="col">#</th>
+        <th scope="col">Id</th>
         <th scope="col">Name</th>
+        <th scope="col">Birth Date</th>
+        <th scope="col">Phone</th>
+        <th scope="col">Address</th>
         <th scope="col">Email</th>
         <th scope="col"></th>
       </tr>
@@ -13,10 +16,15 @@
       <tr *ngFor="let employee of employees">
         <td>{{ employee.id }}</td>
         <td>{{ employee.name }}</td>
+        <td>{{ employee.birthDate }}</td>
+        <td>{{ employee.phone }}</td>
+        <td>{{ employee.address }}</td>
         <td><a href="mailto:{{ employee.email }}">{{ employee.email }}</a></td>
-        <td><button type="button"
-          class="delete"
-                    (click)="deleteEmployee(employee.id)">Delete</button> </td>
+        <td>
+          <button type="button" class="delete"
+                  (click)="getEmployee(employee)" routerLink="/addEmployee">Edit</button>
+          <button type="button" class="delete" style="margin-left: 20px;"
+                    (click)="deleteEmployee(employee.id)">Delete</button></td>
       </tr>
       </tbody>
     </table>

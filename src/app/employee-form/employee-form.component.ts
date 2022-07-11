@@ -16,11 +16,15 @@ export class EmployeeFormComponent {
     private route: ActivatedRoute,
       private router: Router,
         private employeeService: EmployeeService) {
-    this.employee = new Employee();
+    this.employee = employeeService.employee;
   }
 
   onSubmit() {
-    this.employeeService.save(this.employee).subscribe(result => this.gotoEmployeeList());
+    if(this.employee.id != "") {
+      this.employeeService.update(this.employee).subscribe(result => this.gotoEmployeeList());
+    } else {
+      this.employeeService.save(this.employee).subscribe(result => this.gotoEmployeeList());
+    }
   }
 
   gotoEmployeeList() {

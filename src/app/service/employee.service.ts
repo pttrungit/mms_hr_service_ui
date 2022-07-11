@@ -9,9 +9,11 @@ export class EmployeeService {
   private employeesUrl: string;
   private createEmployeeUrl: string;
   private deleteEmployeeUrl: string;
+  public employee: Employee;
 
   constructor(private http: HttpClient, private router: Router, private route: ActivatedRoute) {
     this.employeesUrl = 'http://localhost:9090/api/employee';
+    this.employee = new Employee();
   }
 
   public findAll(): Observable<Employee[]> {
@@ -22,12 +24,20 @@ export class EmployeeService {
     return this.http.post<Employee>(this.employeesUrl, employee);
   }
 
+public update(employee: Employee) {
+    return this.http.put<Employee>(this.employeesUrl, employee);
+  }
+
+  public getEmployee(employee) {
+    this.employee = employee;
+  }
   public delete(id) {
       console.log("delete: "+id);
-      this.http.delete(this.employeesUrl + "/" + id).subscribe(data => {
-          console.log(data);
-          this.router.navigate(['/employees']);
+      if (confirm("Are you want to delete employee: "+id) == true) {
+        this.http.delete(this.employeesUrl + "/" + id).subscribe(data => {
+           location.reload() ;
         });
+      }
     }
 
 }
