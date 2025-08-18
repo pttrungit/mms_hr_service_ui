@@ -1,51 +1,33 @@
-import React, { useState } from 'react';
-import LeaveRequestForm from './components/LeaveRequest/LeaveRequestForm';
-import LeaveRequestList from './components/LeaveRequest/LeaveRequestList';
-import './App.css';
+import React from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import LoginForm from "./components/Auth/LoginForm";
+import LeaveRequestList from "./components/LeaveRequest/LeaveRequestList";
+import RequireAuth from "./components/Auth/RequireAuth";
+import LeaveRequestForm from "./components/LeaveRequest/LeaveRequestForm";
 
 function App() {
-  const [showForm, setShowForm] = useState(true);
-  const [submittedRequests, setSubmittedRequests] = useState([]);
-
-  const handleFormClose = () => {
-    setShowForm(false);
-  };
-
-  const handleFormSubmit = (requestData) => {
-    setSubmittedRequests(prev => [...prev, requestData]);
-    setShowForm(false); // sau khi submit thì quay về danh sách
-  };
-
-  const showCreateForm = () => {
-    setShowForm(true);
-  };
-
   return (
-    <div className="App">
-      {showForm ? (
-        <LeaveRequestForm 
-          onClose={handleFormClose}
-          onSubmit={handleFormSubmit}
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<LoginForm />} />
+        <Route
+          path="/leave-requests"
+          element={
+            <RequireAuth>
+              <LeaveRequestList />
+            </RequireAuth>
+          }
         />
-      ) : (
-        <div className="dashboard">
-          <div className="dashboard-header">
-            <h1>Leave Request Management</h1>
-            <button 
-              className="create-request-btn"
-              onClick={showCreateForm}
-            >
-              + Create New Request
-            </button>
-          </div>
-
-          <LeaveRequestList 
-            requests={submittedRequests} 
-            onCreateNew={showCreateForm} 
-          />
-        </div>
-      )}
-    </div>
+        <Route
+          path="/leave-requests/create"
+          element={
+            <RequireAuth>
+              <LeaveRequestForm />
+            </RequireAuth>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

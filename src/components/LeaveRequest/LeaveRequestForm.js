@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { format, differenceInDays, parseISO } from 'date-fns';
-import styles from './LeaveRequestForm.module.css';
+import { useNavigate } from 'react-router-dom';
+import styles from './LeaveRequestForm.module.css'; // import CSS module
 import { leaveRequestAPI } from '../../services/api';
 import { 
   LEAVE_TYPES, 
@@ -10,7 +11,8 @@ import {
   VALIDATION_MESSAGES 
 } from '../../utils/constants';
 
-const LeaveRequestForm = ({ onClose, onSubmit }) => {
+const LeaveRequestForm = () => {
+  const navigate = useNavigate(); // hook navigate
   const [formData, setFormData] = useState({
     requestType: '',
     reason: '',
@@ -36,17 +38,13 @@ const LeaveRequestForm = ({ onClose, onSubmit }) => {
       try {
         setLoadingData(true);
         
-        // Load users for approver/supervisor selection
         const usersResponse = await leaveRequestAPI.getUsers();
         setUsers(usersResponse.data || []);
         
-        // Load leave balance for current user (assuming user ID 1 for demo)
         const balanceResponse = await leaveRequestAPI.getLeaveBalance(1);
         setLeaveBalance(balanceResponse.data?.remainingDays || 0);
-        
       } catch (error) {
         console.error('Error loading data:', error);
-        // Set mock data if API fails
         setUsers([
           { id: 1, name: 'John Manager', email: 'john@company.com', role: 'Manager' },
           { id: 2, name: 'Sarah Supervisor', email: 'sarah@company.com', role: 'Supervisor' },
@@ -60,10 +58,8 @@ const LeaveRequestForm = ({ onClose, onSubmit }) => {
     loadData();
   }, []);
 
-  // Calculate total days
   const calculateDays = () => {
     if (!formData.startDate || !formData.endDate) return 0;
-    
     try {
       const start = parseISO(formData.startDate);
       const end = parseISO(formData.endDate);
@@ -75,29 +71,16 @@ const LeaveRequestForm = ({ onClose, onSubmit }) => {
 
   const validateForm = () => {
     const newErrors = {};
-
-    if (!formData.requestType) {
-      newErrors.requestType = VALIDATION_MESSAGES.REQUIRED;
-    }
-    if (!formData.reason) {
-      newErrors.reason = VALIDATION_MESSAGES.REQUIRED;
-    }
-    if (!formData.startDate) {
-      newErrors.startDate = VALIDATION_MESSAGES.REQUIRED;
-    }
-    if (!formData.endDate) {
-      newErrors.endDate = VALIDATION_MESSAGES.REQUIRED;
-    }
-    if (!formData.approverId) {
-      newErrors.approverId = VALIDATION_MESSAGES.REQUIRED;
-    }
+    if (!formData.requestType) newErrors.requestType = VALIDATION_MESSAGES.REQUIRED;
+    if (!formData.reason) newErrors.reason = VALIDATION_MESSAGES.REQUIRED;
+    if (!formData.startDate) newErrors.startDate = VALIDATION_MESSAGES.REQUIRED;
+    if (!formData.endDate) newErrors.endDate = VALIDATION_MESSAGES.REQUIRED;
+    if (!formData.approverId) newErrors.approverId = VALIDATION_MESSAGES.REQUIRED;
 
     if (formData.startDate && formData.endDate) {
       const start = new Date(formData.startDate);
       const end = new Date(formData.endDate);
-      if (end < start) {
-        newErrors.endDate = VALIDATION_MESSAGES.END_BEFORE_START;
-      }
+      if (end < start) newErrors.endDate = VALIDATION_MESSAGES.END_BEFORE_START;
     }
 
     setErrors(newErrors);
@@ -105,26 +88,13 @@ const LeaveRequestForm = ({ onClose, onSubmit }) => {
   };
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-
-    // Clear error for this field
-    if (errors[field]) {
-      setErrors(prev => ({
-        ...prev,
-        [field]: ''
-      }));
-    }
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) setErrors(prev => ({ ...prev, [field]: '' }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setLoading(true);
     try {
@@ -136,14 +106,9 @@ const LeaveRequestForm = ({ onClose, onSubmit }) => {
       };
 
       await leaveRequestAPI.createLeaveRequest(requestData);
-      
-      if (onSubmit) {
-        onSubmit(requestData);
-      }
-      
       alert('Leave request submitted successfully!');
-      
-      // Reset form
+
+      // reset form
       setFormData({
         requestType: '',
         reason: '',
@@ -156,13 +121,20 @@ const LeaveRequestForm = ({ onClose, onSubmit }) => {
         informTo: '',
         expectedApprove: ''
       });
-      
+
+      // sau khi submit xong → quay về LeaveRequestList
+      navigate('/leave-requests');
     } catch (error) {
       console.error('Error submitting leave request:', error);
       alert('Error submitting leave request. Please try again.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleClose = () => {
+    // khi nhấn close → quay về LeaveRequestList
+    navigate('/leave-requests');
   };
 
   if (loadingData) {
@@ -179,15 +151,15 @@ const LeaveRequestForm = ({ onClose, onSubmit }) => {
     <div className={styles.container}>
       {/* Header */}
       <div className={styles.header}>
-        <h1 className={styles.headerTitle}>Create New Request</h1>
-        <button className={styles.closeBtn} onClick={onClose}>
+        <h1 className={styles.headerTitle}>Create New Leave Request</h1>
+        <button className={styles.closeBtn} onClick={handleClose}>
           Close
         </button>
       </div>
 
       <form onSubmit={handleSubmit}>
         <div className={styles.formContainer}>
-          {/* Left Section - Request Details */}
+          {/* Left Section */}
           <div className={styles.leftSection}>
             <div className={styles.sectionHeader}>
               <div className={styles.sectionIcon}>📋</div>
@@ -195,185 +167,145 @@ const LeaveRequestForm = ({ onClose, onSubmit }) => {
               <div className={styles.leaveBalance}>
                 <div className={styles.balanceNumber}>{leaveBalance}</div>
                 <span className={styles.balanceText}>Remaining Leave</span>
-                <a href="#" className={styles.balanceLink}>Leave Balance</a>
               </div>
             </div>
 
-            {/* Request Type and Reason */}
             <div className={styles.formRow}>
               <div className={styles.formGroup}>
-                <label className={styles.label}>
-                  Request Type <span className={styles.required}>*</span>
-                </label>
+                <label>Request Type *</label>
                 <select
-                  className={styles.select}
                   value={formData.requestType}
                   onChange={(e) => handleInputChange('requestType', e.target.value)}
+                  className={styles.select}
                 >
                   <option value="">Select type</option>
                   {LEAVE_TYPES.map(type => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
+                    <option key={type.value} value={type.value}>{type.label}</option>
                   ))}
                 </select>
                 {errors.requestType && <div className={styles.error}>{errors.requestType}</div>}
               </div>
 
               <div className={styles.formGroup}>
-                <label className={styles.label}>
-                  Reason <span className={styles.required}>*</span>
-                </label>
+                <label>Reason *</label>
                 <select
-                  className={styles.select}
                   value={formData.reason}
                   onChange={(e) => handleInputChange('reason', e.target.value)}
+                  className={styles.select}
                 >
-                  <option value="">Choose Reason</option>
+                  <option value="">Choose reason</option>
                   {LEAVE_REASONS.map(reason => (
-                    <option key={reason.value} value={reason.value}>
-                      {reason.label}
-                    </option>
+                    <option key={reason.value} value={reason.value}>{reason.label}</option>
                   ))}
                 </select>
                 {errors.reason && <div className={styles.error}>{errors.reason}</div>}
               </div>
             </div>
 
-            {/* Duration Section */}
+            {/* Duration */}
             <div className={styles.durationSection}>
               <div className={styles.durationHeader}>
-                <h3 className={styles.durationTitle}>Duration</h3>
-                <span className={styles.durationTotal}>
-                  Total: {calculateDays()} day(s)
-                </span>
-                <button type="button" className={styles.addDayBtn}>
-                  ➕ Add Day
-                </button>
-              </div>
-
-              <div className={styles.dayRow}>
-                <span className={styles.dayLabel}>0 day(s)</span>
+                <h3>Total: {calculateDays()} day(s)</h3>
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>Start Date <span className={styles.required}>*</span></label>
+                  <label>Start Date *</label>
                   <input
                     type="date"
-                    className={styles.dateInput}
                     value={formData.startDate}
                     onChange={(e) => handleInputChange('startDate', e.target.value)}
+                    className={styles.dateInput}
                   />
                   {errors.startDate && <div className={styles.error}>{errors.startDate}</div>}
                 </div>
-
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>End Date <span className={styles.required}>*</span></label>
+                  <label>End Date *</label>
                   <input
                     type="date"
-                    className={styles.dateInput}
                     value={formData.endDate}
                     onChange={(e) => handleInputChange('endDate', e.target.value)}
+                    className={styles.dateInput}
                   />
                   {errors.endDate && <div className={styles.error}>{errors.endDate}</div>}
                 </div>
-
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>Partial Day <span className={styles.required}>*</span></label>
+                  <label>Partial Day *</label>
                   <select
-                    className={styles.partialSelect}
                     value={formData.partialDay}
                     onChange={(e) => handleInputChange('partialDay', e.target.value)}
+                    className={styles.partialSelect}
                   >
                     {PARTIAL_DAY_OPTIONS.map(option => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
+                      <option key={option.value} value={option.value}>{option.label}</option>
                     ))}
                   </select>
                 </div>
               </div>
             </div>
 
-            {/* Detail Reason */}
             <div className={styles.formGroup}>
-              <label className={styles.label}>Detail Reason</label>
+              <label>Detail Reason</label>
               <textarea
-                className={styles.textarea}
-                placeholder="Enter detail reason ..."
                 value={formData.detailReason}
                 onChange={(e) => handleInputChange('detailReason', e.target.value)}
                 rows={4}
+                className={styles.textarea}
               />
             </div>
           </div>
 
-          {/* Right Section - Approval Status */}
+          {/* Right Section */}
           <div className={styles.rightSection}>
             <div className={styles.approvalSection}>
               <h3>Approval Status</h3>
-              
               <div className={styles.formGroup}>
-                <label className={styles.label}>
-                  Approver <span className={styles.required}>*</span>
-                </label>
+                <label>Approver *</label>
                 <select
-                  className={styles.select}
                   value={formData.approverId}
                   onChange={(e) => handleInputChange('approverId', e.target.value)}
+                  className={styles.select}
                 >
                   <option value="">Select approver</option>
-                  {users.map(user => (
-                    <option key={user.id} value={user.id}>
-                      {user.name} - {user.role}
-                    </option>
+                  {users.map(u => (
+                    <option key={u.id} value={u.id}>{u.name} - {u.role}</option>
                   ))}
                 </select>
                 {errors.approverId && <div className={styles.error}>{errors.approverId}</div>}
               </div>
 
               <div className={styles.formGroup}>
-                <label className={styles.label}>
-                  Supervisor <span className={styles.required}>*</span>
-                </label>
+                <label>Supervisor</label>
                 <select
-                  className={styles.select}
                   value={formData.supervisorId}
                   onChange={(e) => handleInputChange('supervisorId', e.target.value)}
+                  className={styles.select}
                 >
                   <option value="">Select supervisor</option>
-                  {users.map(user => (
-                    <option key={user.id} value={user.id}>
-                      {user.name} - {user.role}
-                    </option>
+                  {users.map(u => (
+                    <option key={u.id} value={u.id}>{u.name} - {u.role}</option>
                   ))}
                 </select>
               </div>
 
               <div className={styles.formGroup}>
-                <label className={styles.label}>Inform To</label>
+                <label>Inform To</label>
                 <input
                   type="text"
-                  className={styles.input}
-                  placeholder="Type 3 chars to find account..."
                   value={formData.informTo}
                   onChange={(e) => handleInputChange('informTo', e.target.value)}
+                  className={styles.input}
                 />
               </div>
 
               <div className={styles.formGroup}>
-                <label className={styles.label}>Expected Approve</label>
+                <label>Expected Approve</label>
                 <input
                   type="date"
-                  className={styles.input}
                   value={formData.expectedApprove}
                   onChange={(e) => handleInputChange('expectedApprove', e.target.value)}
+                  className={styles.input}
                 />
               </div>
 
-              <button 
-                type="submit" 
-                className={styles.submitBtn}
-                disabled={loading}
-              >
+              <button type="submit" className={styles.submitBtn} disabled={loading}>
                 {loading ? 'Submitting...' : 'Submit Request'}
               </button>
             </div>

@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom"; // <-- hook navigate
 import { leaveRequestAPI } from "../../services/api";
 import styles from "./LeaveRequestList.module.css";
 
 const LeaveRequestList = () => {
+  const navigate = useNavigate();
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [filteredRequests, setFilteredRequests] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -24,7 +26,6 @@ const LeaveRequestList = () => {
     fetchLeaveRequests();
   }, []);
 
-  // Search filter
   useEffect(() => {
     const filtered = leaveRequests.filter((req) =>
       `${req.type} ${req.reason} ${req.approver}`
@@ -35,15 +36,37 @@ const LeaveRequestList = () => {
     setCurrentPage(1);
   }, [searchTerm, leaveRequests]);
 
-  // Pagination
   const indexOfLast = currentPage * itemsPerPage;
   const indexOfFirst = indexOfLast - itemsPerPage;
   const currentRequests = filteredRequests.slice(indexOfFirst, indexOfLast);
   const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
 
+  // --- Handle logout ---
+  const handleLogout = () => {
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("userId");
+    navigate("/"); // quay về login
+  };
+
   return (
     <div className={styles.container}>
-      <h2 className={styles.title}>Leave Request List</h2>
+      {/* Header với logout */}
+      <div className={styles.header}>
+        <h2 className={styles.title}>Leave Request List</h2>
+        <button className={styles.logoutBtn} onClick={handleLogout}>
+          Logout
+        </button>
+      </div>
+
+      {/* Button tạo request */}
+      <div className={styles.createButtonWrapper}>
+        <button
+          className={styles.createButton}
+          onClick={() => navigate("/leave-requests/create")}
+        >
+          Create Leave Request
+        </button>
+      </div>
 
       {/* Search bar */}
       <div className={styles.searchBar}>

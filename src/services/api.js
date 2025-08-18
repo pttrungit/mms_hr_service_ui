@@ -1,58 +1,58 @@
-import axios from 'axios';
+import axios from "axios";
 
-const BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080/api';
+// === Base URL backend ===
+const API_BASE_URL = "http://localhost:8080";
 
+// === Axios instance ===
 const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
-// Request interceptor for adding auth token if available
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+// === API CALLS ===
 
-// Response interceptor for handling errors
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error('API Error:', error.response?.data || error.message);
-    return Promise.reject(error);
+// Login API (dùng @RequestParam => query params)
+export const login = async (username, password) => {
+  try {
+    const response = await api.get(
+      `/api/login?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+    );
+    return response.data; // true / false
+  } catch (error) {
+    console.error("❌ Login failed:", error);
+    throw new Error("Invalid credentials or server error.");
   }
-);
+};
 
-// API methods
-export const leaveRequestAPI = {
-  // Get all leave requests (không cần userId nữa)
-  getLeaveRequests: () => api.get('/leave-requests'),
 
-  // Create new leave request
-  createLeaveRequest: (requestData) => api.post('/leave-requests', requestData),
+// Logout
+export const logout = () => {
+  localStorage.removeItem("isLoggedIn");
+};
 
-  // Update leave request status
-  updateLeaveRequestStatus: (requestId, status) =>
-    api.patch(`/leave-requests/${requestId}/status`, { status }),
+// Kiểm tra login
+export const isLoggedIn = () => {
+  return localStorage.getItem("isLoggedIn") === "true";
+};
 
-  // Get leave types
-  getLeaveTypes: () => api.get('/leave-types'),
+// Sau khi login thành công => set cờ
+export const setLoggedIn = () => {
+  localStorage.setItem("isLoggedIn", "true");
+};
 
-  // Get leave reasons
-  getLeaveReasons: () => api.get('/leave-reasons'),
-
-  // Get users for approver/supervisor selection
-  getUsers: () => api.get('/users'),
-
-  // Get user's leave balance
-  getLeaveBalance: (userId) => api.get(`/leave-balance/${userId}`),
+// Get all leave requests
+export const getAllLeaveRequests = async () => {
+  try {
+    const response = await api.get("/leave-requests");
+    return response.data;
+  } catch (error) {
+    console.error("❌ Failed to fetch leave requests:", error);
+    throw error.response?.data || error;
+  }
 };
 
 export default api;
+export const authAPI = { login, logout, isLoggedIn, setLoggedIn };
+export const leaveRequestAPI = { getAllLeaveRequests };
