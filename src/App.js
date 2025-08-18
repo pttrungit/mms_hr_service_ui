@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import LeaveRequestForm from './components/LeaveRequest/LeaveRequestForm';
+import LeaveRequestList from './components/LeaveRequest/LeaveRequestList';
 import './App.css';
 
 function App() {
@@ -12,6 +13,7 @@ function App() {
 
   const handleFormSubmit = (requestData) => {
     setSubmittedRequests(prev => [...prev, requestData]);
+    setShowForm(false); // sau khi submit thì quay về danh sách
   };
 
   const showCreateForm = () => {
@@ -36,38 +38,11 @@ function App() {
               + Create New Request
             </button>
           </div>
-          
-          <div className="requests-list">
-            <h2>Submitted Requests ({submittedRequests.length})</h2>
-            {submittedRequests.length === 0 ? (
-              <div className="empty-state">
-                <p>No leave requests submitted yet.</p>
-                <button 
-                  className="create-first-btn"
-                  onClick={showCreateForm}
-                >
-                  Create Your First Request
-                </button>
-              </div>
-            ) : (
-              <div className="requests-grid">
-                {submittedRequests.map((request, index) => (
-                  <div key={index} className="request-card">
-                    <div className="request-header">
-                      <h3>{request.requestType.replace('_', ' ')}</h3>
-                      <span className="status pending">Pending</span>
-                    </div>
-                    <div className="request-details">
-                      <p><strong>Reason:</strong> {request.reason}</p>
-                      <p><strong>Duration:</strong> {request.startDate} to {request.endDate}</p>
-                      <p><strong>Total Days:</strong> {request.totalDays}</p>
-                      <p><strong>Submitted:</strong> {request.requestDate}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+
+          <LeaveRequestList 
+            requests={submittedRequests} 
+            onCreateNew={showCreateForm} 
+          />
         </div>
       )}
     </div>

@@ -18,9 +18,7 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 // Response interceptor for handling errors
@@ -34,27 +32,27 @@ api.interceptors.response.use(
 
 // API methods
 export const leaveRequestAPI = {
-  // Get leave types
-  getLeaveTypes: () => api.get('/leave-types'),
-  
-  // Get leave reasons
-  getLeaveReasons: () => api.get('/leave-reasons'),
-  
-  // Get users for approver/supervisor selection
-  getUsers: () => api.get('/users'),
-  
-  // Get user's leave balance
-  getLeaveBalance: (userId) => api.get(`/leave-balance/${userId}`),
-  
+  // Get all leave requests (không cần userId nữa)
+  getLeaveRequests: () => api.get('/leave-requests'),
+
   // Create new leave request
   createLeaveRequest: (requestData) => api.post('/leave-requests', requestData),
-  
-  // Get leave requests for a user
-  getLeaveRequests: (userId) => api.get(`/leave-requests/user/${userId}`),
-  
+
   // Update leave request status
-  updateLeaveRequestStatus: (requestId, status) => 
+  updateLeaveRequestStatus: (requestId, status) =>
     api.patch(`/leave-requests/${requestId}/status`, { status }),
+
+  // Get leave types
+  getLeaveTypes: () => api.get('/leave-types'),
+
+  // Get leave reasons
+  getLeaveReasons: () => api.get('/leave-reasons'),
+
+  // Get users for approver/supervisor selection
+  getUsers: () => api.get('/users'),
+
+  // Get user's leave balance
+  getLeaveBalance: (userId) => api.get(`/leave-balance/${userId}`),
 };
 
 export default api;
