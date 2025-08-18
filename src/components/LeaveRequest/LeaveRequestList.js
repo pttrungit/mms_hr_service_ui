@@ -232,12 +232,12 @@ const LeaveRequestList = () => {
                   <tr key={req.id}>
                     <td>{indexOfFirst + index + 1}</td>
                     <td>
-                      <span className={styles.requestType}>{req.type}</span>
+                      <span className={styles.requestType}>{req.requestType}</span>
                     </td>
-                    <td>{req.timeRequest}</td>
+                    <td>{req.timeRequest}{req.startDate} - {req.endDate}</td>
                     <td>{req.partialDay || "All Day"}</td>
                     <td>{req.recurrence || "--"}</td>
-                    <td className={styles.duration}>{req.duration}</td>
+                    <td className={styles.duration}>{req.totalDays}</td>
                     <td className={styles.reason}>{req.reason}</td>
                     <td>{req.approver}</td>
                     <td>{req.delegateTo || "--"}</td>
