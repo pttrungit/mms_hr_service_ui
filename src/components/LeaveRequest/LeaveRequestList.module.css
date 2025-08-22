@@ -478,3 +478,43 @@
 .tableWrapper::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modalContent {
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  width: 1000px;       /* tăng chiều ngang */
+  min-width: 900px;    /* không cho nhỏ hơn */
+  max-width: 95vw;     /* tránh tràn màn hình nhỏ */
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.closeBtn {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+}

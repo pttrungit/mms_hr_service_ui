@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-// Import thêm function getAllLeaveRequests nếu cần
 import { leaveRequestAPI } from "../../services/api";
 import styles from "./LeaveRequestList.module.css";
 
@@ -16,33 +15,31 @@ const LeaveRequestList = () => {
   const itemsPerPage = 10;
 
   const [leaveBalance, setLeaveBalance] = useState(0);
+  const [balanceDetails, setBalanceDetails] = useState([]); // chi tiết entitlement days
   const [loading, setLoading] = useState(false);
-
   const [error, setError] = useState("");
+  const [showBalanceModal, setShowBalanceModal] = useState(false);
 
   const fetchLeaveRequests = async () => {
     setLoading(true);
     setError("");
     try {
-      // Sử dụng leaveRequestAPI.getAllLeaveRequests từ api.js
       const response = await leaveRequestAPI.getAllLeaveRequests();
-      
-      // API trả về trực tiếp array, không có wrapper .data
-      console.log("📄 Fetched leave requests:", response);
-      
       if (Array.isArray(response)) {
         setLeaveRequests(response);
         setFilteredRequests(response);
       } else {
-        console.warn("⚠️ API response is not an array:", response);
         setLeaveRequests([]);
         setFilteredRequests([]);
       }
-      
-      // Tính toán leave balance từ dữ liệu có sẵn hoặc gọi API riêng
-      // Tạm thời set default, bạn có thể thêm API endpoint riêng cho balance
+
+      // Giả sử API trả về entitlement days
       setLeaveBalance(10);
-      
+      setBalanceDetails([
+        { name: "Paid leave", unit: "Day", max: 12, approved: 2, remaining: 10, pending: 0 },
+        { name: "Compensation leave", unit: "Day", max: 9, approved: 0, remaining: 9, pending: 0 },
+        { name: "Sick leave", unit: "Day", max: 30, approved: 0, remaining: 30, pending: 0 },
+      ]);
     } catch (error) {
       console.error("❌ Error fetching leave requests:", error);
       setError("Failed to load leave requests. Please try again.");
@@ -56,50 +53,6 @@ const LeaveRequestList = () => {
   useEffect(() => {
     fetchLeaveRequests();
   }, []);
-
-  useEffect(() => {
-    let filtered = leaveRequests;
-
-    // Filter by search term
-    if (searchTerm) {
-      filtered = filtered.filter((req) =>
-        `${req.type} ${req.reason} ${req.approver}`
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Filter by request type
-    if (requestTypeFilter) {
-      filtered = filtered.filter((req) => req.type === requestTypeFilter);
-    }
-
-    // Filter by status
-    if (statusFilter) {
-      filtered = filtered.filter((req) => req.status === statusFilter);
-    }
-
-    setFilteredRequests(filtered);
-    setCurrentPage(1);
-  }, [searchTerm, requestTypeFilter, statusFilter, leaveRequests]);
-
-  const indexOfLast = currentPage * itemsPerPage;
-  const indexOfFirst = indexOfLast - itemsPerPage;
-  const currentRequests = filteredRequests.slice(indexOfFirst, indexOfLast);
-  const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
-
-  const handleLogout = () => {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("userId");
-    navigate("/");
-  };
-
-  const clearFilters = () => {
-    setSearchTerm("");
-    setRequestTypeFilter("");
-    setStatusFilter("");
-    setDateRange("01/01/2025-31/12/2025");
-  };
 
   const getStatusClassName = (status) => {
     switch (status.toLowerCase()) {
@@ -127,10 +80,19 @@ const LeaveRequestList = () => {
           </div>
         </div>
         <div className={styles.navRight}>
-          <button className={styles.createButton} onClick={() => navigate("/leave-requests/create")}>
+          <button
+            className={styles.createButton}
+            onClick={() => navigate("/leave-requests/create")}
+          >
             + Create Leave Request
           </button>
-          <button className={styles.logoutBtn} onClick={handleLogout}>
+          <button
+            className={styles.logoutBtn}
+            onClick={() => {
+              localStorage.clear();
+              navigate("/");
+            }}
+          >
             Logout
           </button>
         </div>
@@ -140,68 +102,15 @@ const LeaveRequestList = () => {
       <div className={styles.leaveBalance}>
         <span className={styles.balanceNumber}>{leaveBalance}</span>
         <span className={styles.balanceText}>Remaining Leave</span>
-        <button className={styles.balanceLink}>Leave Balance</button>
+        <button
+          className={styles.balanceLink}
+          onClick={() => setShowBalanceModal(true)}
+        >
+          Leave Balance
+        </button>
       </div>
 
-      {/* Filters */}
-      <div className={styles.filtersContainer}>
-        {error && (
-          <div className={styles.errorMessage}>
-            {error}
-          </div>
-        )}
-        
-        <div className={styles.filterGroup}>
-          <label className={styles.filterLabel}>From - To</label>
-          <input
-            type="text"
-            value={dateRange}
-            onChange={(e) => setDateRange(e.target.value)}
-            className={styles.dateInput}
-          />
-        </div>
-
-        <div className={styles.filterGroup}>
-          <label className={styles.filterLabel}>Request Type</label>
-          <select
-            value={requestTypeFilter}
-            onChange={(e) => setRequestTypeFilter(e.target.value)}
-            className={styles.filterSelect}
-          >
-            <option value="">Select options</option>
-            <option value="Work from home">Work from home</option>
-            <option value="Paid leave">Paid leave</option>
-            <option value="Summer Vacation leave">Summer Vacation leave</option>
-            <option value="Maternity leave">Maternity leave</option>
-          </select>
-        </div>
-
-        <div className={styles.filterGroup}>
-          <label className={styles.filterLabel}>Request Status</label>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className={styles.filterSelect}
-          >
-            <option value="">Select options</option>
-            <option value="Approved">Approved</option>
-            <option value="Confirmed">Confirmed</option>
-            <option value="Rejected">Rejected</option>
-            <option value="Pending">Pending</option>
-          </select>
-        </div>
-
-        <div className={styles.filterActions}>
-          <button className={styles.clearBtn} onClick={clearFilters}>
-            Clear
-          </button>
-          <button className={styles.searchBtn} onClick={fetchLeaveRequests} disabled={loading}>
-            {loading ? "🔄" : "🔍"} {loading ? "Loading..." : "Search"}
-          </button>
-        </div>
-      </div>
-
-      {/* Table */}
+      {/* TABLE REQUESTS */}
       <div className={styles.tableContainer}>
         <div className={styles.tableWrapper}>
           <table className={styles.table}>
@@ -220,25 +129,16 @@ const LeaveRequestList = () => {
               </tr>
             </thead>
             <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan="10" className={styles.loading}>
-                    <div className={styles.loadingSpinner}></div>
-                    Loading leave requests...
-                  </td>
-                </tr>
-              ) : currentRequests.length > 0 ? (
-                currentRequests.map((req, index) => (
+              {filteredRequests.length > 0 ? (
+                filteredRequests.map((req, idx) => (
                   <tr key={req.id}>
-                    <td>{indexOfFirst + index + 1}</td>
-                    <td>
-                      <span className={styles.requestType}>{req.requestType}</span>
-                    </td>
-                    <td>{req.timeRequest}{req.startDate} - {req.endDate}</td>
+                    <td>{idx + 1}</td>
+                    <td>{req.type}</td>
+                    <td>{req.startDate} - {req.endDate}</td>
                     <td>{req.partialDay || "All Day"}</td>
                     <td>{req.recurrence || "--"}</td>
-                    <td className={styles.duration}>{req.totalDays}</td>
-                    <td className={styles.reason}>{req.reason}</td>
+                    <td>{req.totalDays}</td>
+                    <td>{req.reason}</td>
                     <td>{req.approver}</td>
                     <td>{req.delegateTo || "--"}</td>
                     <td>
@@ -260,26 +160,44 @@ const LeaveRequestList = () => {
         </div>
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className={styles.pagination}>
-          <button
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage((prev) => prev - 1)}
-            className={styles.paginationBtn}
-          >
-            Previous
-          </button>
-          <span className={styles.pageInfo}>
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage((prev) => prev + 1)}
-            className={styles.paginationBtn}
-          >
-            Next
-          </button>
+      {/* MODAL Leave Balance */}
+      {showBalanceModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+              <h2>Entitle Days</h2>
+              <button
+                className={styles.closeBtn}
+                onClick={() => setShowBalanceModal(false)}
+              >
+                ✖
+              </button>
+            </div>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Request Name</th>
+                  <th>Unit</th>
+                  <th>Maximum Allowed</th>
+                  <th>Approved Quotas</th>
+                  <th>Remaining Quotas</th>
+                  <th>Pending Quotas</th>
+                </tr>
+              </thead>
+              <tbody>
+                {balanceDetails.map((item, i) => (
+                  <tr key={i}>
+                    <td>{item.name}</td>
+                    <td>{item.unit}</td>
+                    <td>{item.max}</td>
+                    <td>{item.approved}</td>
+                    <td>{item.remaining}</td>
+                    <td>{item.pending}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

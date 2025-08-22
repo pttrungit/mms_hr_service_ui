@@ -4,17 +4,23 @@ import LoginForm from "./components/Auth/LoginForm";
 import LeaveRequestList from "./components/LeaveRequest/LeaveRequestList";
 import RequireAuth from "./components/Auth/RequireAuth";
 import LeaveRequestForm from "./components/LeaveRequest/LeaveRequestForm";
+import Layout from "./components/Layout/Layout";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Trang Login, không có sidebar */}
         <Route path="/" element={<LoginForm />} />
+
+        {/* Trang có sidebar */}
         <Route
           path="/leave-requests"
           element={
             <RequireAuth>
-              <LeaveRequestList />
+              <Layout>
+                <LeaveRequestList />
+              </Layout>
             </RequireAuth>
           }
         />
@@ -22,7 +28,9 @@ function App() {
           path="/leave-requests/create"
           element={
             <RequireAuth>
-              <LeaveRequestForm />
+              <Layout>
+                <LeaveRequestForm />
+              </Layout>
             </RequireAuth>
           }
         />
